@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <!-- 背景圆 -->
+  <circle cx="100" cy="100" r="90" fill="#FFC107" />
+  <circle cx="100" cy="100" r="70" fill="white" />
+  
+  <!-- 猫脸 -->
+  <circle cx="100" cy="100" r="50" fill="#FFC107" />
+  
+  <!-- 猫耳朵 -->
+  <path d="M70 65 L85 80 L60 90 Z" fill="#FFC107" />
+  <path d="M130 65 L115 80 L140 90 Z" fill="#FFC107" />
+  
+  <!-- 猫眼睛 -->
+  <circle cx="80" cy="95" r="10" fill="white" />
+  <circle cx="120" cy="95" r="10" fill="white" />
+  <circle cx="80" cy="95" r="5" fill="#333" />
+  <circle cx="120" cy="95" r="5" fill="#333" />
+  
+  <!-- 猫鼻子 -->
+  <circle cx="100" cy="110" r="5" fill="#333" />
+  
+  <!-- 猫嘴 -->
+  <path d="M85 120 Q100 130 115 120" stroke="white" stroke-width="3" fill="none" />
+  
+  <!-- 猫胡须 -->
+  <line x1="80" y1="115" x2="60" y2="110" stroke="white" stroke-width="2" />
+  <line x1="80" y1="120" x2="60" y2="120" stroke="white" stroke-width="2" />
+  <line x1="80" y1="125" x2="60" y2="130" stroke="white" stroke-width="2" />
+  
+  <line x1="120" y1="115" x2="140" y2="110" stroke="white" stroke-width="2" />
+  <line x1="120" y1="120" x2="140" y2="120" stroke="white" stroke-width="2" />
+  <line x1="120" y1="125" x2="140" y2="130" stroke="white" stroke-width="2" />
+  
+  <!-- 文字 -->
+  <text x="100" y="180" font-family="Arial" font-weight="bold" font-size="24" fill="#333" text-anchor="middle">问小猫</text>
+</svg>

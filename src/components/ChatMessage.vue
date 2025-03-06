@@ -12,6 +12,7 @@
 
 <script lang="ts">
 import { defineComponent, computed } from 'vue'
+import type { PropType } from 'vue'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 
@@ -26,135 +27,180 @@ export default defineComponent({
      * 消息内容
      */
     content: {
-      type: String,
-      required: true
+      type: String as PropType<string>,
+      required: true,
     },
     /**
-     * 消息角色（用户或AI助手）
+     * 发送者角色
      */
     role: {
-      type: String,
+      type: String as PropType<'user' | 'assistant'>,
       required: true,
-      validator: (value: string) => ['user', 'assistant'].includes(value)
     },
     /**
      * 消息时间戳
      */
     timestamp: {
       type: Number,
-      required: true
-    }
+      required: true,
+    },
+    /**
+     * 用户头像
+     */
+    userAvatar: {
+      type: String,
+      default: '/user-avatar.svg',
+    },
+    /**
+     * AI头像
+     */
+    aiAvatar: {
+      type: String,
+      default: '/ai-avatar.png',
+    },
   },
   setup(props) {
     /**
-     * 判断是否为用户消息
+     * 是否为用户消息
      */
     const isUser = computed(() => props.role === 'user')
-    
+
     /**
-     * 获取头像源
+     * 头像源
      */
     const avatarSrc = computed(() => {
-      return isUser.value 
-        ? '/user-avatar.png' 
-        : '/ai-avatar.png'
+      return isUser.value ? props.userAvatar : props.aiAvatar
     })
-    
+
     /**
      * 格式化消息内容（支持Markdown）
      */
     const formattedContent = computed(() => {
-      // 使用marked解析Markdown，并使用DOMPurify清理HTML以防XSS攻击
-      return DOMPurify.sanitize(marked(props.content))
+      try {
+        // 使用标准字符串转换确保内容是字符串
+        const contentStr = String(props.content)
+        // 使用marked解析Markdown
+        const markedContent = marked(contentStr)
+        // 使用DOMPurify清理HTML以防XSS攻击
+        return DOMPurify.sanitize(markedContent)
+      } catch (error) {
+        console.error('处理消息内容时出错:', error)
+        return ''
+      }
     })
-    
+
     /**
      * 格式化时间
      */
     const formattedTime = computed(() => {
       const date = new Date(props.timestamp)
-      return date.toLocaleTimeString('zh-CN', { 
-        hour: '2-digit', 
-        minute: '2-digit'
-      })
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     })
-    
+
     return {
       isUser,
       avatarSrc,
       formattedContent,
-      formattedTime
+      formattedTime,
     }
-  }
+  },
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .chat-message {
   display: flex;
   margin-bottom: 20px;
-  padding: 0 20px;
-}
 
-.user-message {
-  flex-direction: row-reverse;
-}
+  .avatar {
+    margin-right: 10px;
+    flex-shrink: 0;
+  }
 
-.avatar {
-  margin: 0 10px;
-}
+  .message-content {
+    flex-grow: 1;
 
-.message-content {
-  max-width: 70%;
-}
+    .message-text {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 4px;
+      line-height: 1.5;
+      max-width: 80%;
+      word-break: break-word;
 
-.user-message .message-content {
-  text-align: right;
-}
+      /* 支持Markdown渲染的基本样式 */
+      :deep(p) {
+        margin: 0 0 10px;
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
 
-.message-text {
-  padding: 12px 16px;
-  border-radius: 10px;
-  word-break: break-word;
-  line-height: 1.5;
-}
+      :deep(pre) {
+        background-color: #f5f5f5;
+        padding: 10px;
+        border-radius: 4px;
+        overflow-x: auto;
+      }
 
-.user-message .message-text {
-  background-color: #95ec69;
-  color: #000;
-}
+      :deep(code) {
+        font-family: 'Courier New', monospace;
+        background-color: #f5f5f5;
+        padding: 2px 4px;
+        border-radius: 3px;
+      }
 
-.ai-message .message-text {
-  background-color: #f2f2f2;
-  color: #333;
-}
+      :deep(a) {
+        color: #1890ff;
+        text-decoration: none;
+        &:hover {
+          text-decoration: underline;
+        }
+      }
 
-.message-time {
-  font-size: 12px;
-  color: #999;
-  margin-top: 5px;
-}
+      :deep(ul, ol) {
+        padding-left: 20px;
+        margin: 10px 0;
+      }
 
-/* Markdown样式 */
-.message-text :deep(pre) {
-  background-color: #f8f8f8;
-  padding: 10px;
-  border-radius: 5px;
-  overflow-x: auto;
-}
+      :deep(img) {
+        max-width: 100%;
+        border-radius: 4px;
+      }
+    }
 
-.message-text :deep(code) {
-  font-family: Consolas, Monaco, 'Andale Mono', monospace;
-  background-color: rgba(0, 0, 0, 0.05);
-  padding: 2px 4px;
-  border-radius: 3px;
-}
+    .message-time {
+      font-size: 12px;
+      color: #999;
+      margin-top: 4px;
+    }
+  }
 
-.message-text :deep(p) {
-  margin: 8px 0;
-}
+  &.user-message {
+    flex-direction: row-reverse;
 
-.message-text :deep(ul), .message-text :deep(ol) {
-  padding-left: 20px;
+    .avatar {
+      margin-right: 0;
+      margin-left: 10px;
+    }
+
+    .message-content {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+
+      .message-text {
+        background-color: #e1f5fe;
+        color: #0277bd;
+      }
+    }
+  }
+
+  &.ai-message {
+    .message-text {
+      background-color: #f5f5f5;
+      color: #333;
+    }
+  }
 }
 </style> 

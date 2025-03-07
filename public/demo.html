@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI视频生成 - WebSocket测试</title>
+    <style>
+      body {
+        font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+      .card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        margin-bottom: 20px;
+      }
+      h1 {
+        color: #333;
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      .form-group {
+        margin-bottom: 20px;
+      }
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+      }
+      input,
+      textarea,
+      button {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-sizing: border-box;
+        font-size: 14px;
+      }
+      textarea {
+        min-height: 120px;
+        resize: vertical;
+      }
+      button {
+        background-color: #1890ff;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-weight: bold;
+        margin-top: 10px;
+      }
+      button:hover {
+        background-color: #40a9ff;
+      }
+      button:disabled {
+        background-color: #d9d9d9;
+        cursor: not-allowed;
+      }
+      .status {
+        font-weight: bold;
+        margin-bottom: 10px;
+      }
+      .status.connected {
+        color: green;
+      }
+      .status.disconnected {
+        color: red;
+      }
+      .status.generating {
+        color: blue;
+      }
+      .log-container {
+        background-color: #f8f8f8;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 10px;
+        margin-top: 20px;
+        max-height: 300px;
+        overflow-y: auto;
+        font-family: monospace;
+        font-size: 12px;
+      }
+      .log-entry {
+        margin-bottom: 5px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 5px;
+      }
+      .log-entry.system {
+        color: #1890ff;
+      }
+      .log-entry.error {
+        color: #f5222d;
+      }
+      .log-entry.success {
+        color: #52c41a;
+      }
+      .progress-container {
+        margin-top: 20px;
+      }
+      .progress-bar {
+        height: 20px;
+        background-color: #f5f5f5;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 10px;
+      }
+      .progress-fill {
+        height: 100%;
+        background-color: #52c41a;
+        width: 0%;
+        transition: width 0.3s ease;
+      }
+      .progress-text {
+        text-align: center;
+        font-size: 14px;
+        font-weight: bold;
+      }
+      .stage {
+        margin-top: 10px;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>AI视频生成 - WebSocket测试</h1>
+
+    <div class="card">
+      <div class="status disconnected" id="connectionStatus">未连接</div>
+      <div class="form-group">
+        <label for="codeInput">连接标识码 (code)</label>
+        <input
+          type="text"
+          id="codeInput"
+          placeholder="输入唯一标识，例如：user_123"
+          value="user_123"
+        />
+      </div>
+      <button id="connectBtn">连接WebSocket</button>
+      <button id="disconnectBtn" disabled>断开连接</button>
+    </div>
+
+    <div class="card">
+      <div class="form-group">
+        <label for="textInput">输入文本</label>
+        <textarea id="textInput" placeholder="输入要生成视频的文本内容" maxlength="2000">
+这是一个测试，AI视频生成系统可以根据输入的文本自动生成短视频。天空中的云朵变化多端，海面上波光粼粼，山间的小溪潺潺流淌。</textarea
+        >
+      </div>
+      <button id="generateBtn" disabled>生成视频</button>
+    </div>
+
+    <div class="card">
+      <h3>视频生成进度</h3>
+      <div class="progress-container">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-text" id="progressText">0%</div>
+        <div class="stage" id="stageText">未开始</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>消息日志</h3>
+      <div class="log-container" id="logContainer"></div>
+    </div>
+
+    <script>
+      let ws = null
+      let heartbeatInterval = null
+      let taskId = null
+
+      // 记录日志
+      function log(message, type = '') {
+        const logContainer = document.getElementById('logContainer')
+        const logEntry = document.createElement('div')
+        logEntry.className = `log-entry ${type}`
+        logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`
+        logContainer.appendChild(logEntry)
+        logContainer.scrollTop = logContainer.scrollHeight
+      }
+
+      // 连接WebSocket
+      document.getElementById('connectBtn').addEventListener('click', function () {
+        const code = document.getElementById('codeInput').value.trim()
+        if (!code) {
+          log('请输入连接标识码', 'error')
+          return
+        }
+
+        try {
+          ws = new WebSocket(`ws://119.97.185.162:9943/api/ws/video-generation?code=${code}`)
+
+          ws.onopen = function () {
+            document.getElementById('connectionStatus').textContent = '已连接'
+            document.getElementById('connectionStatus').className = 'status connected'
+            document.getElementById('connectBtn').disabled = true
+            document.getElementById('disconnectBtn').disabled = false
+            document.getElementById('generateBtn').disabled = false
+            log('WebSocket连接已建立', 'system')
+
+            // 开始心跳
+            startHeartbeat()
+          }
+
+          ws.onmessage = function (event) {
+            const message = JSON.parse(event.data)
+
+            switch (message.type) {
+              case 'connected':
+                log(`收到连接成功消息: ${message.data}`, 'success')
+                break
+              case 'pong':
+                // 收到心跳响应
+                log('收到心跳响应', 'system')
+                break
+              default:
+                log(`收到消息: ${event.data}`)
+
+                // 尝试解析进度消息
+                try {
+                  const progress = JSON.parse(event.data)
+                  if (progress.progress !== undefined) {
+                    updateProgress(progress)
+                  }
+                } catch (e) {
+                  // 忽略解析错误
+                }
+            }
+          }
+
+          ws.onclose = function (event) {
+            stopHeartbeat()
+            document.getElementById('connectionStatus').textContent = '已断开'
+            document.getElementById('connectionStatus').className = 'status disconnected'
+            document.getElementById('connectBtn').disabled = false
+            document.getElementById('disconnectBtn').disabled = true
+            document.getElementById('generateBtn').disabled = true
+            log(`WebSocket连接已关闭: ${event.code} ${event.reason}`, 'error')
+
+            // 添加自动重连
+            if (event.code !== 1000) {
+              // 非正常关闭
+              reconnectWebSocket()
+            }
+          }
+
+          ws.onerror = function (error) {
+            log(`WebSocket错误: ${error}`, 'error')
+          }
+        } catch (error) {
+          log(`创建WebSocket失败: ${error.message}`, 'error')
+        }
+      })
+
+      // 断开WebSocket连接
+      document.getElementById('disconnectBtn').addEventListener('click', function () {
+        if (ws) {
+          ws.close()
+          stopHeartbeat()
+          log('手动断开WebSocket连接', 'system')
+        }
+      })
+
+      // 开始心跳
+      function startHeartbeat() {
+        stopHeartbeat() // 确保之前的心跳被清除
+
+        heartbeatInterval = setInterval(() => {
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            try {
+              ws.send(
+                JSON.stringify({
+                  type: 'ping',
+                  data: 'ping',
+                }),
+              )
+              log('发送心跳', 'system')
+            } catch (e) {
+              log('心跳发送失败: ' + e.message, 'error')
+              // 尝试重新连接
+              reconnectWebSocket()
+            }
+          } else if (ws) {
+            // 连接已断开，尝试重连
+            reconnectWebSocket()
+          }
+        }, 15000) // 每15秒发送一次心跳
+      }
+
+      // 在demo.html中添加
+      let reconnectAttempts = 0
+      const maxReconnectAttempts = 5
+      let reconnecting = false
+
+      function reconnectWebSocket() {
+        if (reconnecting || reconnectAttempts >= maxReconnectAttempts) return
+
+        reconnecting = true
+        reconnectAttempts++
+
+        setTimeout(() => {
+          log(`尝试重新连接 (${reconnectAttempts}/${maxReconnectAttempts})...`, 'system')
+          // 重新连接逻辑
+          connectWebSocket()
+          reconnecting = false
+        }, 3000 * reconnectAttempts) // 间隔时间随尝试次数增加
+      }
+
+      // 停止心跳
+      function stopHeartbeat() {
+        if (heartbeatInterval) {
+          clearInterval(heartbeatInterval)
+          heartbeatInterval = null
+        }
+      }
+
+      // 更新进度条
+      function updateProgress(progress) {
+        taskId = progress.taskId
+        const progressFill = document.getElementById('progressFill')
+        const progressText = document.getElementById('progressText')
+        const stageText = document.getElementById('stageText')
+
+        progressFill.style.width = `${progress.progress}%`
+        progressText.textContent = `${progress.progress}%`
+
+        if (progress.stageDesc) {
+          stageText.textContent = progress.stageDesc
+        } else {
+          if (progress.progress <= 10) {
+            stageText.textContent = '内容理解中'
+          } else if (progress.progress <= 20) {
+            stageText.textContent = '分镜头脚本生成中'
+          } else if (progress.progress <= 50) {
+            stageText.textContent = '视频生成中'
+          } else if (progress.progress <= 70) {
+            stageText.textContent = '语音合成中'
+          } else if (progress.progress <= 90) {
+            stageText.textContent = '视频合成中'
+          } else {
+            stageText.textContent = '处理完成'
+          }
+        }
+
+        if (progress.errorMessage) {
+          stageText.textContent = `错误: ${progress.errorMessage}`
+          log(`生成失败: ${progress.errorMessage}`, 'error')
+        }
+
+        if (progress.videoUrl) {
+          log(`视频生成成功，URL: ${progress.videoUrl}`, 'success')
+          // 可以在这里添加显示视频的代码
+        }
+      }
+
+      // 发送视频生成请求
+      document.getElementById('generateBtn').addEventListener('click', async function () {
+        const text = document.getElementById('textInput').value.trim()
+        if (!text) {
+          log('请输入文本内容', 'error')
+          return
+        }
+
+        const code = document.getElementById('codeInput').value.trim()
+
+        try {
+          const btn = this
+          btn.disabled = true
+          btn.textContent = '生成中...'
+          document.getElementById('connectionStatus').textContent = '生成中...'
+          document.getElementById('connectionStatus').className = 'status generating'
+
+          // 重置进度条
+          document.getElementById('progressFill').style.width = '0%'
+          document.getElementById('progressText').textContent = '0%'
+          document.getElementById('stageText').textContent = '准备开始...'
+
+          const response = await fetch('http://119.97.185.162:9943/api/video/generate', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              inputText: text,
+              code: code,
+            }),
+          })
+
+          if (!response.ok) {
+            throw new Error(`HTTP错误 ${response.status}`)
+          }
+
+          const result = await response.json()
+          log(`视频生成任务已创建，taskId: ${result}`, 'success')
+          taskId = result
+        } catch (error) {
+          log(`视频生成请求失败: ${error.message}`, 'error')
+          document.getElementById('connectionStatus').textContent = '已连接'
+          document.getElementById('connectionStatus').className = 'status connected'
+        } finally {
+          const btn = document.getElementById('generateBtn')
+          btn.disabled = false
+          btn.textContent = '生成视频'
+        }
+      })
+    </script>
+  </body>
+</html>

@@ -1,4 +1,5 @@
-import './assets/main.css'
+import './styles/index.scss'
+import 'highlight.js/styles/github.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
@@ -15,7 +16,7 @@ const pinia = createPinia()
 app.use(pinia)
 app.use(router)
 app.use(ElementPlus, {
-  locale: zhCn
+  locale: zhCn,
 })
 
 app.mount('#app')

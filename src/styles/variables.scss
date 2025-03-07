@@ -1,0 +1,67 @@
+// 颜色系统
+$primary-color: #4a90e2;
+$primary-color-light: #5c9ee6;
+$primary-color-dark: #3a7bc8;
+$primary-color-bg: #e6f2ff;
+
+$secondary-color: #ffc107;
+$secondary-color-light: #ffca28;
+$secondary-color-dark: #ffb300;
+$secondary-color-bg: #fff8e1;
+
+$success-color: #4caf50;
+$warning-color: #ff9800;
+$danger-color: #ff4d4f;
+$info-color: #909399;
+
+$text-primary: #333333;
+$text-secondary: #666666;
+$text-muted: #999999;
+
+$background-color: #f8f6ff;
+$border-color: #eaeaea;
+
+// 字体
+$font-family-base: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+$font-size-base: 14px;
+$font-size-large: 16px;
+$font-size-small: 12px;
+$font-size-title: 18px;
+
+// 间距
+$spacing-mini: 4px;
+$spacing-small: 8px;
+$spacing-base: 12px;
+$spacing-medium: 16px;
+$spacing-large: 20px;
+$spacing-xl: 24px;
+$spacing-xxl: 32px;
+
+// 圆角
+$border-radius-small: 4px;
+$border-radius-base: 8px;
+$border-radius-large: 16px;
+$border-radius-circle: 50%;
+
+// 阴影
+$box-shadow-base: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+$box-shadow-light: 0 2px 8px 0 rgba(0, 0, 0, 0.05);
+$box-shadow-dark: 0 4px 16px 0 rgba(0, 0, 0, 0.2);
+
+// 过渡
+$transition-base: all 0.3s ease;
+$transition-fast: all 0.2s ease;
+$transition-slow: all 0.5s ease;
+
+// 布局
+$sidebar-width: 250px;
+$sidebar-collapsed-width: 80px;
+$header-height: 60px;
+$footer-height: 60px;
+
+// 响应式断点
+$breakpoint-xs: 576px;
+$breakpoint-sm: 768px;
+$breakpoint-md: 992px;
+$breakpoint-lg: 1200px;
+$breakpoint-xl: 1600px;

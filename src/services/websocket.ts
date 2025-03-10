@@ -54,7 +54,7 @@ interface VideoCompleteMessage {
 class WebSocketService {
   private ws: WebSocket | null = null
   private userCode: string = ''
-  private baseUrl: string = 'ws://119.97.185.162:9943/api/ws/video-generation'
+  private baseUrl: string = import.meta.env.VITE_WEBSOCKET_API_URL
   private reconnectAttempts: number = 0
   private maxReconnectAttempts: number = 5
   private reconnectTimeout: number = 3000
@@ -92,10 +92,8 @@ class WebSocketService {
    */
   public connect(): Promise<boolean> {
     return new Promise((resolve, reject) => {
-      // 确保用户码已生成
-      if (!this.userCode) {
-        this.getUserCode()
-      }
+      // 每次连接时生成新的用户码
+      this.getUserCode()
 
       // 关闭现有连接
       this.disconnect()

@@ -405,11 +405,11 @@ export const useChatStore = defineStore('chat', {
      * 切换会话
      * @param sessionId - 会话ID
      */
-    switchSession(sessionId: string) {
+    switchSession(sessionId: string, isInit: boolean = false) {
       // 保存当前会话消息
       if (this.currentSessionId) {
         const oldSessionIndex = this.sessionList.findIndex((s) => s.id === this.currentSessionId)
-        if (oldSessionIndex !== -1) {
+        if (oldSessionIndex !== -1 && !isInit) {
           this.sessionList[oldSessionIndex].messages = [...this.chatMessages]
           this.saveSessionList()
         }
@@ -420,6 +420,7 @@ export const useChatStore = defineStore('chat', {
       // 加载会话消息
       const session = this.sessionList.find((s) => s.id === sessionId)
       if (session && session.messages) {
+        console.log('加载会话消息', sessionId)
         this.chatMessages = [...session.messages]
       } else {
         this.clearMessages()
@@ -432,14 +433,16 @@ export const useChatStore = defineStore('chat', {
     initFromLocalStorage() {
       // 如果没有当前会话或当前会话不存在，创建新会话
       if (!this.currentSessionId || !this.sessionList.find((s) => s.id === this.currentSessionId)) {
+        console.log('没有当前会话或当前会话不存在，创建新会话')
         if (this.sessionList.length > 0) {
           this.switchSession(this.sessionList[0].id)
         } else {
           this.createNewSession()
         }
       } else {
+        console.log('有当前会话，加载当前会话的消息')
         // 加载当前会话的消息
-        this.switchSession(this.currentSessionId)
+        this.switchSession(this.currentSessionId, true)
       }
     },
   },

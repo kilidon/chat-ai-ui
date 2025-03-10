@@ -4,7 +4,7 @@
       <!-- 会话侧边栏 -->
       <SessionSidebar
         :sessionList="chatStore.sessionList"
-        :currentSessionId="chatStore.currentSessionId"
+        :currentSessionId="chatStore.currentSessionId || ''"
         @create-session="createNewSession"
         @switch-session="switchSession"
         @delete-session="deleteSession"
